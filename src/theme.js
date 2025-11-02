@@ -1,42 +1,87 @@
+// src/theme.js
 import { createTheme } from "@mui/material/styles";
 import { createContext, useMemo, useState, useEffect } from "react";
 
+// Colores que pediste
+const PALETTE = {
+  dark: {
+    background: { default: "#1A1A1A", paper: "#0F1417" },
+    text: { primary: "#F0F0F0", secondary: "rgba(240,240,240,.7)" },
+    primary: { main: "#004D61" },   // acento 1
+    secondary: { main: "#822659" }, // acento 2
+    success: { main: "#3E5641" },   // CTA
+  },
+  light: {
+    background: { default: "#F7F7F7", paper: "#FFFFFF" },
+    text: { primary: "#1A1A1A", secondary: "rgba(26,26,26,.7)" },
+    primary: { main: "#004D61" },
+    secondary: { main: "#822659" },
+    success: { main: "#3E5641" },
+  },
+};
+
 export const ColorModeContext = createContext({
-  mode: "light",
-  toggle: () => {},
+  mode: "dark",
+  toggle: () => { },
 });
 
 export function useColorMode() {
   const [mode, setMode] = useState(
-    () => localStorage.getItem("mode") || "light"
+    () => localStorage.getItem("theme-mode") || "dark"
   );
 
   useEffect(() => {
-    localStorage.setItem("mode", mode);
-    document.documentElement.setAttribute("data-mode", mode);
+    localStorage.setItem("theme-mode", mode);
+    // opcional: clase para CSS globals
+    document.documentElement.dataset.theme = mode;
   }, [mode]);
+
+  const toggle = () =>
+    setMode((prev) => (prev === "light" ? "dark" : "light"));
 
   const theme = useMemo(
     () =>
       createTheme({
         palette: {
           mode,
-          primary: { main: mode === "light" ? "#16a34a" : "#22c55e" },
-          background: {
-            default: mode === "light" ? "#f6f8fa" : "#0b0f14",
-            paper: mode === "light" ? "#ffffff" : "#0f1720",
-          },
+          ...(mode === "dark" ? PALETTE.dark : PALETTE.light),
         },
-        shape: { borderRadius: 14 },
+        shape: { borderRadius: 12 },
         components: {
-          MuiCard: {
+          MuiAppBar: {
             styleOverrides: {
               root: {
-                borderRadius: 16,
-                boxShadow:
-                  mode === "light"
-                    ? "0 8px 24px rgba(0,0,0,.06)"
-                    : "0 8px 24px rgba(0,0,0,.35)",
+                // que el AppBar cambie con el tema
+                backgroundColor:
+                  mode === "dark"
+                    ? PALETTE.dark.background.paper
+                    : PALETTE.light.background.paper,
+                color:
+                  mode === "dark"
+                    ? PALETTE.dark.text.primary
+                    : PALETTE.light.text.primary,
+                borderBottom:
+                  mode === "dark"
+                    ? "1px solid rgba(255,255,255,.06)"
+                    : "1px solid rgba(0,0,0,.06)",
+              },
+            },
+          },
+          MuiDrawer: {
+            styleOverrides: {
+              paper: {
+                backgroundColor:
+                  mode === "dark"
+                    ? PALETTE.dark.background.paper
+                    : PALETTE.light.background.paper,
+                color:
+                  mode === "dark"
+                    ? PALETTE.dark.text.primary
+                    : PALETTE.light.text.primary,
+                borderRight:
+                  mode === "dark"
+                    ? "1px solid rgba(255,255,255,.06)"
+                    : "1px solid rgba(0,0,0,.06)",
               },
             },
           },
@@ -45,12 +90,7 @@ export function useColorMode() {
     [mode]
   );
 
-  const ctx = useMemo(
-    () => ({
-      mode,
-      toggle: () => setMode((m) => (m === "light" ? "dark" : "light")),
-    }),
-    [mode]
-  );
+  const ctx = useMemo(() => ({ mode, toggle }), [mode]);
+
   return { theme, ctx };
 }

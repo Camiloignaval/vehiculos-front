@@ -1,3 +1,4 @@
+// src/components/Layout.jsx
 import React, { useContext } from "react";
 import {
   AppBar,
@@ -6,6 +7,7 @@ import {
   Box,
   Avatar,
   Tooltip,
+  Typography,
 } from "@mui/material";
 import DarkModeIcon from "@mui/icons-material/DarkModeOutlined";
 import LightModeIcon from "@mui/icons-material/LightModeOutlined";
@@ -25,6 +27,10 @@ export default function Layout() {
     navigate("/login");
   };
 
+  // 👇 cambia logo según tema
+  const navLogoSrc =
+    mode === "dark" ? "/images/iconBlanco.png" : "/images/iconAzul.png";
+
   return (
     <Box sx={{ display: "flex" }}>
       <AppBar
@@ -32,8 +38,25 @@ export default function Layout() {
         elevation={0}
         sx={{ zIndex: (t) => t.zIndex.drawer + 1 }}
       >
-        <Toolbar>
+        <Toolbar sx={{ gap: 1 }}>
+          {/* --- LOGO MINI A LA IZQUIERDA --- */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box
+              component="img"
+              src={navLogoSrc}
+              alt="Camilo y Diego Asociados"
+              sx={{
+                height: 50, // tamaño mini
+                width: 70,
+                // objectFit: "contain",
+                // display: "block",
+              }}
+            />
+          </Box>
+          {/* -------------------------------- */}
+
           <Box sx={{ flexGrow: 1 }} />
+
           <Tooltip title={mode === "light" ? "Modo oscuro" : "Modo claro"}>
             <IconButton color="inherit" onClick={toggle}>
               {mode === "light" ? <DarkModeIcon /> : <LightModeIcon />}
@@ -50,7 +73,6 @@ export default function Layout() {
 
       <SidebarNav />
 
-      {/* Área donde se renderizan las páginas hijas */}
       <Box
         component="main"
         sx={{ flexGrow: 1, p: 3, ml: `${drawerWidth}px`, minHeight: "100vh" }}

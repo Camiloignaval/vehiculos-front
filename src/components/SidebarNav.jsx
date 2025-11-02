@@ -31,21 +31,20 @@ export default function SidebarNav() {
         "& .MuiDrawer-paper": {
           width: drawerWidth,
           boxSizing: "border-box",
-          borderRight: "none",
         },
       }}
     >
       <Toolbar>
-        <Box sx={{ fontWeight: 800, fontSize: 18 }}>Vehículos App</Box>
+        <Box sx={{ fontWeight: 800, fontSize: 16, ml: 0.5 }}>Menú</Box>
       </Toolbar>
-      <List>
+      <List sx={{ px: 1 }}>
         {items.map((it) => (
           <ListItemButton
             key={it.to}
             component={Link}
             to={it.to}
             selected={pathname.startsWith(it.to)}
-            sx={{ mx: 1, borderRadius: 2 }}
+            sx={{ mx: 0.5, mb: 0.5 }}
           >
             <ListItemIcon>{it.icon}</ListItemIcon>
             <ListItemText primary={it.label} />
