@@ -372,7 +372,7 @@ export default function GestionPage() {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={12} md={4}>
                   <TextField
                     type="date"
                     label="Fecha"
@@ -383,7 +383,7 @@ export default function GestionPage() {
                     disabled={noActivos}
                   />
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={12} md={4}>
                   <TextField
                     label="Concepto"
                     fullWidth
@@ -392,7 +392,7 @@ export default function GestionPage() {
                     disabled={noActivos}
                   />
                 </Grid>
-                <Grid item xs={4}>
+                <Grid item xs={12} md={4}>
                   <TextField
                     label="Monto"
                     fullWidth
