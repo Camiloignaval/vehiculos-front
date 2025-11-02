@@ -143,59 +143,64 @@ export default function DashboardPage() {
 
       {/* FILTROS */}
       <Paper sx={{ p: { xs: 2, md: 2 }, mb: 2 }}>
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          alignItems={{ xs: "stretch", md: "center" }}
-          sx={{
-            "& > *": { flex: { md: 1 } },
-          }}
-        >
-          <TextField
-            type="date"
-            size="small"
-            label="Desde"
-            InputLabelProps={{ shrink: true }}
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-            fullWidth
-          />
-
-          <TextField
-            type="date"
-            size="small"
-            label="Hasta"
-            InputLabelProps={{ shrink: true }}
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-            fullWidth
-          />
-
-          <Autocomplete
-            options={vehicleOptions}
-            value={selectedVehicle}
-            onChange={(_, v) => setSelectedVehicle(v)}
-            getOptionKey={(o) => o._id}
-            getOptionLabel={(o) =>
-              o ? `${o.patente ?? ""} ${o.name ?? ""}`.trim() : ""
-            }
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                size="small"
-                label="Vehículo (Nombre/Patente)"
-                placeholder="Escribe para filtrar"
-                fullWidth
-              />
-            )}
-            clearOnEscape
-            sx={{ width: "100%" }}
-          />
-
+        <Stack spacing={2}>
+          {/* Fila 1: campos de filtros */}
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={2}
-            sx={{ width: { xs: "100%", md: "auto" } }}
+            alignItems={{ xs: "stretch", md: "center" }}
+            sx={{
+              "& > *": { flex: { md: 1 } },
+            }}
+          >
+            <TextField
+              type="date"
+              size="small"
+              label="Desde"
+              InputLabelProps={{ shrink: true }}
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              fullWidth
+            />
+
+            <TextField
+              type="date"
+              size="small"
+              label="Hasta"
+              InputLabelProps={{ shrink: true }}
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              fullWidth
+            />
+
+            <Autocomplete
+              options={vehicleOptions}
+              value={selectedVehicle}
+              onChange={(_, v) => setSelectedVehicle(v)}
+              getOptionKey={(o) => o._id}
+              getOptionLabel={(o) =>
+                o ? `${o.patente ?? ""} ${o.name ?? ""}`.trim() : ""
+              }
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  size="small"
+                  label="Vehículo (Nombre/Patente)"
+                  placeholder="Escribe para filtrar"
+                  fullWidth
+                />
+              )}
+              clearOnEscape
+              sx={{ width: "100%" }}
+            />
+          </Stack>
+
+          {/* Fila 2: botones a la derecha */}
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            justifyContent="flex-end"
+            sx={{ width: "100%" }}
           >
             <Button
               variant="contained"
