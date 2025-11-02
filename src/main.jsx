@@ -1,9 +1,9 @@
-// src/main.jsx (como lo tienes)
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { CssBaseline, ThemeProvider } from "@mui/material";
 import App from "./App.jsx";
+import "./App.css"; // 👈 Import global aquí
 import { ColorModeContext, useColorMode } from "./theme.js";
 
 function Root() {
