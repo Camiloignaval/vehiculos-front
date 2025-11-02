@@ -111,58 +111,86 @@ export default function DashboardPage() {
       </Typography>
 
       {/* FILTROS */}
-      <Paper sx={{ p: 2, mb: 2 }}>
+      <Paper sx={{ p: { xs: 2, md: 2 }, mb: 2 }}>
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
-          alignItems="center"
+          alignItems={{ xs: "stretch", md: "center" }}
+          sx={{
+            // que los hijos crezcan en md+
+            "& > *": { flex: { md: 1 } },
+          }}
         >
           <TextField
             type="date"
+            size="small"
             label="Desde"
             InputLabelProps={{ shrink: true }}
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
+            fullWidth
           />
+
           <TextField
             type="date"
+            size="small"
             label="Hasta"
             InputLabelProps={{ shrink: true }}
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
+            fullWidth
           />
+
           <Autocomplete
-            sx={{ minWidth: 280 }}
             options={vehicleOptions}
+            value={selectedVehicle}
+            onChange={(_, v) => setSelectedVehicle(v)}
             getOptionKey={(o) => o._id}
             getOptionLabel={(o) =>
               o ? `${o.patente ?? ""} ${o.name ?? ""}`.trim() : ""
             }
-            value={selectedVehicle}
-            onChange={(_, v) => setSelectedVehicle(v)}
             renderInput={(params) => (
               <TextField
                 {...params}
+                size="small"
                 label="Vehículo (Nombre/Patente)"
                 placeholder="Escribe para filtrar"
+                fullWidth
               />
             )}
             clearOnEscape
+            sx={{ width: "100%" }} // 100% en mobile
           />
-          <Button variant="contained" onClick={fetchMetrics}>
-            Aplicar filtros
-          </Button>
-          <Button
-            variant="text"
-            onClick={() => {
-              setStartDate(daysAgoISO(90));
-              setEndDate(todayISO());
-              setSelectedVehicle(null);
-              setTimeout(fetchMetrics, 0);
-            }}
+
+          <Stack
+            direction={{ xs: "column", md: "row" }}
+            spacing={2}
+            sx={{ width: { xs: "100%", md: "auto" } }}
           >
-            Limpiar
-          </Button>
+            <Button
+              variant="contained"
+              onClick={fetchMetrics}
+              sx={{
+                width: { xs: "100%", md: "auto" },
+                py: { xs: 1.25, md: 1 },
+              }}
+            >
+              Aplicar filtros
+            </Button>
+
+            <Button
+              variant="outlined"
+              onClick={() => {
+                setStartDate(daysAgoISO(90));
+                setEndDate(todayISO());
+                setSelectedVehicle(null);
+                setTimeout(fetchMetrics, 0);
+              }}
+              sx={{ width: { xs: "100%", md: "auto" } }}
+            >
+              Limpiar
+            </Button>
+          </Stack>
         </Stack>
       </Paper>
 
