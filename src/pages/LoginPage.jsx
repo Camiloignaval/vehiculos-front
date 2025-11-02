@@ -15,6 +15,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { Auth } from "../api.js";
 import { useNavigate } from "react-router-dom";
+import logoLight from "../assets/brand/logoAzul.png";
 import logoDark from "../assets/brand/logoBlanco.png";
 
 const IMAGES = [
@@ -131,7 +132,7 @@ export default function LoginPage() {
     }
   };
 
-  const logoSrc = logoDark; // sin fondo, se ve perfecto en oscuro
+  const logoSrc = theme.palette.mode === "dark" ? logoDark : logoLight;
 
   return (
     <Grid container>
