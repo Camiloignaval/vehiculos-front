@@ -14,6 +14,8 @@ import LogoutIcon from "@mui/icons-material/LogoutOutlined";
 import { ColorModeContext } from "../theme.js";
 import { useNavigate, Outlet } from "react-router-dom";
 import SidebarNav from "./SidebarNav.jsx";
+import logoLight from "../assets/brand/iconAzul.png";
+import logoDark from "../assets/brand/iconBlanco.png";
 
 const drawerWidth = 240;
 
@@ -29,8 +31,7 @@ export default function Layout() {
 
   const handleDrawerToggle = () => setMobileOpen((p) => !p);
 
-  const navLogoSrc =
-    mode === "dark" ? "/images/iconBlanco.png" : "/images/iconAzul.png";
+  const navLogoSrc = mode === "dark" ? logoDark : logoLight;
 
   return (
     <Box sx={{ display: "flex" }}>

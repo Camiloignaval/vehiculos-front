@@ -15,6 +15,7 @@ import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import { Auth } from "../api.js";
 import { useNavigate } from "react-router-dom";
+import logoDark from "../assets/brand/logoBlanco.png";
 
 const IMAGES = [
   "https://img.freepik.com/fotos-premium/sedan-lujo-negro-iluminado-oscuridad_1230681-22146.jpg?semt=ais_hybrid&w=740&q=80",
@@ -130,7 +131,7 @@ export default function LoginPage() {
     }
   };
 
-  const logoSrc = "/images/logoBlanco.png"; // sin fondo, se ve perfecto en oscuro
+  const logoSrc = logoDark; // sin fondo, se ve perfecto en oscuro
 
   return (
     <Grid container>
