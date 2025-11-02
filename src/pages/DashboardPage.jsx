@@ -7,6 +7,9 @@ import {
   Autocomplete,
   Button,
   Stack,
+  useMediaQuery,
+  useTheme,
+  Box,
 } from "@mui/material";
 import { Metrics, Vehicles } from "../api.js";
 import KpiCard from "../components/KpiCard.jsx";
@@ -49,6 +52,9 @@ export default function DashboardPage() {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // xs/sm
+
   const fetchVehicles = async () => {
     // showAll=true para poder buscar vendidos también
     const list = await Vehicles.list(true);
@@ -74,7 +80,8 @@ export default function DashboardPage() {
   useEffect(() => {
     // carga inicial
     fetchMetrics();
-  }, []); // eslint-disable-line
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const byVehicle = useMemo(() => {
     if (!metrics?.perVehicle) return [];
@@ -94,6 +101,30 @@ export default function DashboardPage() {
       { name: "Gastos", value: metrics.totalExpenses },
     ];
   }, [metrics]);
+
+  // ---------- Responsividad y helpers para gráficos ----------
+  const barHeight = isMobile ? 320 : 380;
+  const pieHeight = isMobile ? 320 : 380;
+
+  const barMargin = isMobile
+    ? { top: 8, right: 8, bottom: 36, left: 0 }
+    : { top: 16, right: 16, bottom: 24, left: 8 };
+
+  // Truncado para nombres largos del eje X
+  const shorten = (s = "", max = 14) =>
+    s.length <= max ? s : s.slice(0, max - 1).trim() + "…";
+
+  const xTickProps = {
+    fontSize: isMobile ? 10 : 12,
+    fill: theme.palette.text.secondary,
+  };
+  const yTickProps = {
+    fontSize: isMobile ? 10 : 12,
+    fill: theme.palette.text.secondary,
+  };
+
+  // ancho mínimo para scroll horizontal en móvil (110 px por item aprox.)
+  const chartMinWidth = Math.max(360, byVehicle.length * 110);
 
   const COLORS = [
     "#22C55E",
@@ -117,7 +148,6 @@ export default function DashboardPage() {
           spacing={2}
           alignItems={{ xs: "stretch", md: "center" }}
           sx={{
-            // que los hijos crezcan en md+
             "& > *": { flex: { md: 1 } },
           }}
         >
@@ -159,7 +189,7 @@ export default function DashboardPage() {
               />
             )}
             clearOnEscape
-            sx={{ width: "100%" }} // 100% en mobile
+            sx={{ width: "100%" }}
           />
 
           <Stack
@@ -205,7 +235,6 @@ export default function DashboardPage() {
             />
           </Grid>
           <Grid item xs={6} md={3}>
-            {/* Gastos = SOLO operativos */}
             <KpiCard
               title="Gastos (operativos)"
               value={currency(metrics.totalOpExpenses)}
@@ -213,7 +242,6 @@ export default function DashboardPage() {
             />
           </Grid>
           <Grid item xs={6} md={3}>
-            {/* Inversión total (global) = compra + op históricos */}
             <KpiCard
               title="Inversión total (global)"
               value={currency(metrics.totalInversionGlobal)}
@@ -230,50 +258,107 @@ export default function DashboardPage() {
         </Grid>
       )}
 
-      {/* GRÁFICOS */}
       <Grid container spacing={2}>
+        {/* Barras */}
         <Grid item xs={12} md={7}>
-          <Paper sx={{ p: 2, height: 420 }}>
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
               Inversión / Gastos / Ingresos por vehículo
             </Typography>
-            <ResponsiveContainer width="100%" height="90%">
-              <BarChart data={byVehicle}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" hide={false} />
-                <YAxis />
-                <Tooltip formatter={(v, k) => [currency(v), k]} />
-                <Legend />
-                <Bar dataKey="Inversión" fill="#3B82F6" />
-                <Bar dataKey="Gastos" fill="#EF4444" />
-                <Bar dataKey="Ingresos" fill="#22C55E" />
-              </BarChart>
-            </ResponsiveContainer>
+
+            {/* Scroll horizontal SOLO en móvil cuando hay muchos items */}
+            <Box
+              sx={{
+                width: "100%",
+                overflowX: { xs: "auto", sm: "auto", md: "visible" },
+                overflowY: "hidden",
+              }}
+            >
+              <Box
+                sx={{
+                  width: { xs: chartMinWidth, md: "100%" },
+                  height: barHeight,
+                }}
+              >
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={byVehicle}
+                    margin={barMargin}
+                    barCategoryGap={isMobile ? "20%" : "10%"}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="name"
+                      tick={xTickProps} // 👈 siempre mostramos ticks
+                      tickLine={false}
+                      interval={0} // 👈 mostramos todos
+                      angle={isMobile ? -30 : 0}
+                      textAnchor={isMobile ? "end" : "middle"}
+                      height={isMobile ? 36 : 20}
+                      tickFormatter={(v) =>
+                        shorten(String(v), isMobile ? 14 : 24)
+                      }
+                    />
+                    <YAxis tick={yTickProps} width={isMobile ? 40 : 48} />
+                    <Tooltip formatter={(v, k) => [currency(v), k]} />
+                    <Legend
+                      wrapperStyle={{
+                        fontSize: isMobile ? 11 : 12,
+                        paddingTop: 50,
+                      }}
+                    />
+                    <Bar
+                      dataKey="Inversión"
+                      fill="#3B82F6"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={isMobile ? 36 : 48}
+                    />
+                    <Bar
+                      dataKey="Gastos"
+                      fill="#EF4444"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={isMobile ? 36 : 48}
+                    />
+                    <Bar
+                      dataKey="Ingresos"
+                      fill="#22C55E"
+                      radius={[4, 4, 0, 0]}
+                      maxBarSize={isMobile ? 36 : 48}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </Box>
           </Paper>
         </Grid>
 
+        {/* Pie / Donut */}
         <Grid item xs={12} md={5}>
-          <Paper sx={{ p: 2, height: 420 }}>
+          <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
               Ingresos vs Gastos (rango aplicado)
             </Typography>
-            <ResponsiveContainer width="100%" height="90%">
-              <PieChart>
-                <Pie
-                  data={pie}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={70}
-                  outerRadius={120}
-                  label
-                >
-                  {pie.map((_, i) => (
-                    <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v) => currency(v)} />
-              </PieChart>
-            </ResponsiveContainer>
+
+            <Box sx={{ height: pieHeight }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pie}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={isMobile ? 70 : 80}
+                    outerRadius={isMobile ? 110 : 120}
+                    label={!isMobile}
+                  >
+                    {pie.map((_, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v) => currency(v)} />
+                  {!isMobile && <Legend />}
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
           </Paper>
         </Grid>
       </Grid>
