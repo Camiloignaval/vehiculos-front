@@ -19,6 +19,7 @@ import { CheckCircle } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import { Vehicles, Expenses } from "../api.js";
+import { formatAny_esCL, todayLocalYMD } from "../helpers/index.js";
 
 const currency = (n) =>
   (n ?? 0).toLocaleString("es-CL", {
@@ -82,15 +83,11 @@ export default function GestionPage() {
   const [vName, setVName] = useState("");
   const [vPatente, setVPatente] = useState("");
   const [vPrice, setVPrice] = useState("");
-  const [vDate, setVDate] = useState(() =>
-    new Date().toISOString().slice(0, 10)
-  );
-  const [vImage, setVImage] = useState(null); // 👈 archivo de imagen
+  const [vDate, setVDate] = useState(() => todayLocalYMD()); // 👈 local
+  const [vImage, setVImage] = useState(null); // archivo de imagen
 
   // Registrar gasto
-  const [eDate, setEDate] = useState(() =>
-    new Date().toISOString().slice(0, 10)
-  );
+  const [eDate, setEDate] = useState(() => todayLocalYMD()); // 👈 local
   const [eName, setEName] = useState("");
   const [eAmount, setEAmount] = useState("");
 
@@ -177,8 +174,7 @@ export default function GestionPage() {
       alert("Ingresa un precio de venta válido.");
       return;
     }
-    const soldDate =
-      sellDateById[veh._id] || new Date().toISOString().slice(0, 10);
+    const soldDate = sellDateById[veh._id] || todayLocalYMD();
 
     if (
       !confirm(
@@ -419,8 +415,7 @@ export default function GestionPage() {
               </Typography>
               {expenses.map((g) => (
                 <Typography key={g._id} variant="body2">
-                  {new Date(g.date).toLocaleDateString()} — {g.name}:{" "}
-                  {currency(g.amount)}
+                  {formatAny_esCL(g.date)} — {g.name}: {currency(g.amount)}
                 </Typography>
               ))}
             </CardContent>
@@ -473,86 +468,98 @@ export default function GestionPage() {
                   </Grid>
                 )}
 
-                {activosFiltrados.map((v) => (
-                  <Grid key={v._id} item xs={12} md={6} lg={4}>
-                    <Card
-                      variant="outlined"
-                      sx={{ p: 2, borderRadius: 2, height: "100%" }}
-                    >
-                      <Stack
-                        direction="row"
-                        alignItems="center"
-                        justifyContent="space-between"
+                {activosFiltrados.map((v) => {
+                  const opTotal = expenseSumByVeh[v._id] || 0;
+                  const totalInversion = Number(v.purchasePrice || 0) + opTotal;
+
+                  return (
+                    <Grid key={v._id} item xs={12} md={6} lg={4}>
+                      <Card
+                        variant="outlined"
+                        sx={{ p: 2, borderRadius: 2, height: "100%" }}
                       >
-                        <Typography fontWeight={700}>
-                          {v.patente} — {v.name}
-                        </Typography>
-                        <Chip label="Activo" color="info" size="small" />
-                      </Stack>
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          justifyContent="space-between"
+                        >
+                          <Typography fontWeight={700}>
+                            {v.patente} — {v.name}
+                          </Typography>
+                          <Chip label="Activo" color="info" size="small" />
+                        </Stack>
 
-                      {/* Thumbnail */}
-                      <Thumb src={v.imageUrl} alt={`${v.patente} ${v.name}`} />
+                        {/* Thumbnail */}
+                        <Thumb
+                          src={v.imageUrl}
+                          alt={`${v.patente} ${v.name}`}
+                        />
 
-                      <Divider sx={{ my: 1.25 }} />
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{ mb: 1.5 }}
-                      >
-                        Compra: {new Date(v.purchaseDate).toLocaleDateString()}{" "}
-                        — {currency(v.purchasePrice)}
-                      </Typography>
+                        <Divider sx={{ my: 1.25 }} />
+                        <Stack spacing={0.5} sx={{ mb: 1.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Compra: {formatAny_esCL(v.purchaseDate)} —{" "}
+                            {currency(v.purchasePrice)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Gastos (operativos): {currency(opTotal)}
+                          </Typography>
+                          <Typography variant="body2" fontWeight={700}>
+                            Total invertido: {currency(totalInversion)}
+                          </Typography>
+                        </Stack>
 
-                      <Divider sx={{ my: 1.25 }} />
-                      <Grid container spacing={1}>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Fecha venta"
-                            type="date"
-                            size="small"
-                            fullWidth
-                            InputLabelProps={{ shrink: true }}
-                            value={sellDateById[v._id] ?? ""}
-                            onChange={(e) =>
-                              setSellDateById((s) => ({
-                                ...s,
-                                [v._id]: e.target.value,
-                              }))
-                            }
-                          />
+                        <Divider sx={{ my: 1.25 }} />
+                        <Grid container spacing={1}>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Fecha venta"
+                              type="date"
+                              size="small"
+                              fullWidth
+                              InputLabelProps={{ shrink: true }}
+                              value={sellDateById[v._id] ?? ""}
+                              onChange={(e) =>
+                                setSellDateById((s) => ({
+                                  ...s,
+                                  [v._id]: e.target.value,
+                                }))
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={6}>
+                            <TextField
+                              label="Precio venta"
+                              size="small"
+                              fullWidth
+                              value={sellPriceById[v._id] ?? ""}
+                              onChange={(e) =>
+                                setSellPriceById((s) => ({
+                                  ...s,
+                                  [v._id]: e.target.value,
+                                }))
+                              }
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Tooltip title="Marcar como vendido">
+                              <span>
+                                <Button
+                                  fullWidth
+                                  variant="outlined"
+                                  startIcon={<CheckCircle />}
+                                  onClick={() => handleMarkSold(v)}
+                                >
+                                  Marcar vendido
+                                </Button>
+                              </span>
+                            </Tooltip>
+                          </Grid>
                         </Grid>
-                        <Grid item xs={6}>
-                          <TextField
-                            label="Precio venta"
-                            size="small"
-                            fullWidth
-                            value={sellPriceById[v._id] ?? ""}
-                            onChange={(e) =>
-                              setSellPriceById((s) => ({
-                                ...s,
-                                [v._id]: e.target.value,
-                              }))
-                            }
-                          />
-                        </Grid>
-                        <Grid item xs={12}>
-                          <Tooltip title="Marcar como vendido">
-                            <span>
-                              <Button
-                                fullWidth
-                                variant="outlined"
-                                startIcon={<CheckCircle />}
-                                onClick={() => handleMarkSold(v)}
-                              >
-                                Marcar vendido
-                              </Button>
-                            </span>
-                          </Tooltip>
-                        </Grid>
-                      </Grid>
-                    </Card>
-                  </Grid>
-                ))}
+                      </Card>
+                    </Grid>
+                  );
+                })}
               </Grid>
             </CardContent>
           </Card>
@@ -605,8 +612,8 @@ export default function GestionPage() {
                 )}
 
                 {vendidosFiltrados.map((v) => {
-                  const opTotal = expenseSumByVeh[v._id] || 0; // gastos operativos acumulados
-                  const totalCosto = Number(v.purchasePrice || 0) + opTotal; // compra + operativos
+                  const opTotal = expenseSumByVeh[v._id] || 0;
+                  const totalCosto = Number(v.purchasePrice || 0) + opTotal;
                   const utilidad = Number(v.soldPrice || 0) - totalCosto;
 
                   return (
@@ -635,13 +642,12 @@ export default function GestionPage() {
                         <Divider sx={{ my: 1.25 }} />
                         <Stack spacing={0.5}>
                           <Typography variant="body2" color="text.secondary">
-                            Compra:{" "}
-                            {new Date(v.purchaseDate).toLocaleDateString()} —{" "}
+                            Compra: {formatAny_esCL(v.purchaseDate)} —{" "}
                             {currency(v.purchasePrice)}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Vendido: {new Date(v.soldDate).toLocaleDateString()}{" "}
-                            — {currency(v.soldPrice)}
+                            Vendido: {formatAny_esCL(v.soldDate)} —{" "}
+                            {currency(v.soldPrice)}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
                             Gasto total (operativo): {currency(opTotal)}
