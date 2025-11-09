@@ -53,10 +53,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm")); // xs/sm
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const fetchVehicles = async () => {
-    // showAll=true para poder buscar vendidos también
     const list = await Vehicles.list(true);
     setVehicleOptions(list);
   };
@@ -78,31 +77,31 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    // carga inicial
     fetchMetrics();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // === Datos para gráficos ===
   const byVehicle = useMemo(() => {
     if (!metrics?.perVehicle) return [];
     return metrics.perVehicle.map((v) => ({
       name: `${v.patente || ""} ${v.name || ""}`.trim(),
-      Inversión: v.invested, // global
-      Gastos: v.opExpenses, // SOLO operativos (rango)
-      Ingresos: v.income,
-      Utilidad: v.profit,
+      "Inversión (rango)": v.investedRange ?? 0, // 👈 ahora responde a filtros
+      Gastos: v.opExpenses ?? 0, // SOLO operativos (rango)
+      Ingresos: v.income ?? 0,
+      Utilidad: v.profit ?? 0,
     }));
   }, [metrics]);
 
   const pie = useMemo(() => {
     if (!metrics) return [];
     return [
-      { name: "Ingresos", value: metrics.totalIngresos },
-      { name: "Gastos", value: metrics.totalExpenses },
+      { name: "Ingresos", value: metrics.totalIngresos ?? 0 },
+      { name: "Gastos", value: metrics.totalExpenses ?? 0 },
     ];
   }, [metrics]);
 
-  // ---------- Responsividad y helpers para gráficos ----------
+  // ---------- Responsividad y helpers ----------
   const barHeight = isMobile ? 320 : 380;
   const pieHeight = isMobile ? 320 : 380;
 
@@ -110,7 +109,6 @@ export default function DashboardPage() {
     ? { top: 8, right: 8, bottom: 36, left: 0 }
     : { top: 16, right: 16, bottom: 24, left: 8 };
 
-  // Truncado para nombres largos del eje X
   const shorten = (s = "", max = 14) =>
     s.length <= max ? s : s.slice(0, max - 1).trim() + "…";
 
@@ -123,7 +121,7 @@ export default function DashboardPage() {
     fill: theme.palette.text.secondary,
   };
 
-  // ancho mínimo para scroll horizontal en móvil (110 px por item aprox.)
+  // ancho mínimo para scroll horizontal en móvil
   const chartMinWidth = Math.max(360, byVehicle.length * 110);
 
   const COLORS = [
@@ -144,7 +142,7 @@ export default function DashboardPage() {
       {/* FILTROS */}
       <Paper sx={{ p: { xs: 2, md: 2 }, mb: 2 }}>
         <Stack spacing={2}>
-          {/* Fila 1: campos de filtros */}
+          {/* Fila 1: campos */}
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={2}
@@ -195,7 +193,7 @@ export default function DashboardPage() {
             />
           </Stack>
 
-          {/* Fila 2: botones a la derecha */}
+          {/* Fila 2: botones */}
           <Stack
             direction={{ xs: "column", md: "row" }}
             spacing={2}
@@ -248,6 +246,13 @@ export default function DashboardPage() {
           </Grid>
           <Grid item xs={6} md={3}>
             <KpiCard
+              title="Inversión total (rango)"
+              value={currency(metrics.totalInversionRange ?? 0)}
+              color="#0ea5e9"
+            />
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <KpiCard
               title="Inversión total (global)"
               value={currency(metrics.totalInversionGlobal)}
               color="#3b82f6"
@@ -268,10 +273,10 @@ export default function DashboardPage() {
         <Grid item xs={12} md={7}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ mb: 1, fontWeight: 700 }}>
-              Inversión / Gastos / Ingresos por vehículo
+              Inversión (rango) / Gastos / Ingresos por vehículo
             </Typography>
 
-            {/* Scroll horizontal SOLO en móvil cuando hay muchos items */}
+            {/* Scroll horizontal en móvil si hay muchos items */}
             <Box
               sx={{
                 width: "100%",
@@ -294,9 +299,9 @@ export default function DashboardPage() {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
                       dataKey="name"
-                      tick={xTickProps} // 👈 siempre mostramos ticks
+                      tick={xTickProps}
                       tickLine={false}
-                      interval={0} // 👈 mostramos todos
+                      interval={0}
                       angle={isMobile ? -30 : 0}
                       textAnchor={isMobile ? "end" : "middle"}
                       height={isMobile ? 36 : 20}
@@ -313,7 +318,7 @@ export default function DashboardPage() {
                       }}
                     />
                     <Bar
-                      dataKey="Inversión"
+                      dataKey="Inversión (rango)"
                       fill="#3B82F6"
                       radius={[4, 4, 0, 0]}
                       maxBarSize={isMobile ? 36 : 48}
