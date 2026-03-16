@@ -1,19 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
-  Container,
-  Grid,
+  Alert,
+  Box,
+  Button,
   Card,
   CardContent,
-  Typography,
-  TextField,
-  Button,
-  MenuItem,
-  Divider,
   Chip,
-  Stack,
-  Tooltip,
-  InputAdornment,
+  Container,
+  Divider,
+  Grid,
   IconButton,
+  InputAdornment,
+  MenuItem,
+  Paper,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
 } from "@mui/material";
 import { CheckCircle } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -28,25 +31,32 @@ const currency = (n) =>
     maximumFractionDigits: 0,
   });
 
-// Thumbnail simple
+const integer = (n) =>
+  Math.round(n ?? 0).toLocaleString("es-CL", {
+    maximumFractionDigits: 0,
+  });
+
 function Thumb({ src, alt }) {
   return (
-    <div
-      style={{
+    <Box
+      sx={{
         width: "100%",
-        height: 140,
-        borderRadius: 8,
+        height: 180,
+        borderRadius: 2,
         overflow: "hidden",
-        marginTop: 8,
-        marginBottom: 12,
-        background: "rgba(255,255,255,0.04)",
+        mt: 1,
+        mb: 1.5,
+        bgcolor: "rgba(255,255,255,0.04)",
+        border: "1px solid",
+        borderColor: "divider",
       }}
     >
       {src ? (
-        <img
+        <Box
+          component="img"
           src={src}
           alt={alt}
-          style={{
+          sx={{
             width: "100%",
             height: "100%",
             objectFit: "cover",
@@ -54,56 +64,121 @@ function Thumb({ src, alt }) {
           }}
         />
       ) : (
-        <div
-          style={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 12,
-            opacity: 0.6,
-          }}
+        <Stack
+          alignItems="center"
+          justifyContent="center"
+          sx={{ width: "100%", height: "100%" }}
         >
-          Sin imagen
-        </div>
+          <Typography variant="body2" color="text.secondary">
+            Sin imagen
+          </Typography>
+        </Stack>
       )}
-    </div>
+    </Box>
+  );
+}
+
+function SectionTitle({ title, subtitle, chip }) {
+  return (
+    <Stack
+      direction={{ xs: "column", sm: "row" }}
+      spacing={1}
+      alignItems={{ xs: "flex-start", sm: "center" }}
+      justifyContent="space-between"
+      sx={{ mb: 2 }}
+    >
+      <Box>
+        <Typography variant="h6" fontWeight={800}>
+          {title}
+        </Typography>
+        {subtitle ? (
+          <Typography variant="body2" color="text.secondary">
+            {subtitle}
+          </Typography>
+        ) : null}
+      </Box>
+      {chip || null}
+    </Stack>
+  );
+}
+
+function SummaryCard({ title, value, color, subtitle }) {
+  return (
+    <Paper
+      sx={{
+        p: 2,
+        height: "100%",
+        borderTop: `4px solid ${color}`,
+        borderRadius: 2,
+      }}
+    >
+      <Typography variant="body2" color="text.secondary">
+        {title}
+      </Typography>
+      <Typography variant="h5" fontWeight={800} sx={{ mt: 0.5 }}>
+        {value}
+      </Typography>
+      {subtitle ? (
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.75, display: "block" }}>
+          {subtitle}
+        </Typography>
+      ) : null}
+    </Paper>
+  );
+}
+
+function SearchField({ value, onChange, placeholder, onClear }) {
+  return (
+    <TextField
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      InputProps={{
+        startAdornment: (
+          <InputAdornment position="start">
+            <SearchIcon fontSize="small" />
+          </InputAdornment>
+        ),
+        endAdornment: value ? (
+          <InputAdornment position="end">
+            <IconButton size="small" onClick={onClear}>
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          </InputAdornment>
+        ) : null,
+      }}
+      sx={{ width: { xs: "100%", md: 360 } }}
+    />
   );
 }
 
 export default function GestionPage() {
-  // Vehículos y resumen de gastos
   const [vehicles, setVehicles] = useState([]);
   const [expenseSumByVeh, setExpenseSumByVeh] = useState({});
   const [vehicleId, setVehicleId] = useState("");
   const [expenses, setExpenses] = useState([]);
 
-  // Crear vehículo
   const [vName, setVName] = useState("");
   const [vPatente, setVPatente] = useState("");
   const [vPrice, setVPrice] = useState("");
-  const [vDate, setVDate] = useState(() => todayLocalYMD()); // 👈 local
-  const [vImage, setVImage] = useState(null); // archivo de imagen
+  const [vDate, setVDate] = useState(() => todayLocalYMD());
+  const [vImage, setVImage] = useState(null);
 
-  // Registrar gasto
-  const [eDate, setEDate] = useState(() => todayLocalYMD()); // 👈 local
+  const [eDate, setEDate] = useState(() => todayLocalYMD());
   const [eName, setEName] = useState("");
   const [eAmount, setEAmount] = useState("");
 
-  // Vender
   const [sellPriceById, setSellPriceById] = useState({});
   const [sellDateById, setSellDateById] = useState({});
 
-  // Búsquedas
   const [qActivos, setQActivos] = useState("");
   const [qVendidos, setQVendidos] = useState("");
 
   const loadVehicles = async () => {
-    const vs = await Vehicles.list(true); // incluye vendidos
+    const vs = await Vehicles.list(true);
     setVehicles(Array.isArray(vs) ? vs : []);
 
-    const sumMap = await Expenses.summary(); // { vehId: totalOperativo }
+    const sumMap = await Expenses.summary();
     setExpenseSumByVeh(sumMap || {});
 
     const activosNow = (vs || []).filter((v) => !v.soldDate);
@@ -128,7 +203,6 @@ export default function GestionPage() {
   const handleAddVehicle = async () => {
     if (!vName || !vPatente || !vPrice) return;
 
-    // Enviar con imagen si existe
     if (vImage) {
       const fd = new FormData();
       fd.append("name", vName);
@@ -164,23 +238,23 @@ export default function GestionPage() {
     setEName("");
     setEAmount("");
     await loadExpensesFor(vehicleId);
-    await loadVehicles(); // refresca resumen
+    await loadVehicles();
   };
 
   const handleMarkSold = async (veh) => {
     const raw = sellPriceById[veh._id];
     const soldPrice = Number(raw);
     if (!raw || Number.isNaN(soldPrice) || soldPrice <= 0) {
-      alert("Ingresa un precio de venta válido.");
+      alert("Ingresa un precio de venta valido.");
       return;
     }
     const soldDate = sellDateById[veh._id] || todayLocalYMD();
 
     if (
       !confirm(
-        `Marcar como vendido ${veh.patente} — ${veh.name} por ${currency(
+        `Marcar como vendido ${veh.patente} - ${veh.name} por ${currency(
           soldPrice
-        )} ?`
+        )}?`
       )
     ) {
       return;
@@ -198,31 +272,99 @@ export default function GestionPage() {
     }
   };
 
-  // ---------- Secciones y filtros ----------
   const norm = (s) => String(s || "").toLowerCase();
   const match = (v, q) => norm(`${v.patente} ${v.name}`).includes(norm(q));
 
-  const activosSorted = [...vehicles]
-    .filter((v) => !v.soldDate)
-    .sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+  const activosSorted = useMemo(
+    () =>
+      [...vehicles]
+        .filter((v) => !v.soldDate)
+        .sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate)),
+    [vehicles]
+  );
 
-  const vendidosSorted = [...vehicles]
-    .filter((v) => !!v.soldDate)
-    .sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate));
+  const vendidosSorted = useMemo(
+    () =>
+      [...vehicles]
+        .filter((v) => !!v.soldDate)
+        .sort((a, b) => new Date(b.soldDate) - new Date(a.soldDate)),
+    [vehicles]
+  );
 
-  const activosFiltrados = activosSorted.filter((v) => match(v, qActivos));
-  const vendidosFiltrados = vendidosSorted.filter((v) => match(v, qVendidos));
+  const activosFiltrados = useMemo(
+    () => activosSorted.filter((v) => match(v, qActivos)),
+    [activosSorted, qActivos]
+  );
+
+  const vendidosFiltrados = useMemo(
+    () => vendidosSorted.filter((v) => match(v, qVendidos)),
+    [qVendidos, vendidosSorted]
+  );
 
   const noActivos = activosSorted.length === 0;
+
+  const totalOperativo = useMemo(
+    () =>
+      Object.values(expenseSumByVeh).reduce(
+        (acc, amount) => acc + Number(amount || 0),
+        0
+      ),
+    [expenseSumByVeh]
+  );
+
+  const selectedVehicle = useMemo(
+    () => activosSorted.find((v) => v._id === vehicleId) || null,
+    [activosSorted, vehicleId]
+  );
 
   return (
     <Container sx={{ py: 3 }}>
       <Typography variant="h5" fontWeight={800} mb={2}>
-        Gestión de vehículos y gastos
+        Gestion de vehiculos y gastos
       </Typography>
 
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            title="Activos"
+            value={integer(activosSorted.length)}
+            color="#38bdf8"
+            subtitle="Vehiculos disponibles"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            title="Vendidos"
+            value={integer(vendidosSorted.length)}
+            color="#22c55e"
+            subtitle="Vehiculos cerrados"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            title="Gasto operativo"
+            value={currency(totalOperativo)}
+            color="#ef4444"
+            subtitle="Acumulado registrado"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <SummaryCard
+            title="Seleccionado"
+            value={
+              selectedVehicle
+                ? `${selectedVehicle.patente}`
+                : "Sin vehiculo"
+            }
+            color="#a855f7"
+            subtitle={
+              selectedVehicle ? selectedVehicle.name : "Elige un activo para gastos"
+            }
+          />
+        </Grid>
+      </Grid>
+
       <Grid container spacing={2}>
-        {/* Crear vehículo */}
         <Grid item xs={12} md={6}>
           <Card
             sx={{
@@ -232,9 +374,11 @@ export default function GestionPage() {
             }}
           >
             <CardContent>
-              <Typography variant="h6" mb={2}>
-                Nuevo vehículo
-              </Typography>
+              <SectionTitle
+                title="Nuevo vehiculo"
+                subtitle="Carga los datos base y, si quieres, agrega una imagen."
+              />
+
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
@@ -244,7 +388,7 @@ export default function GestionPage() {
                     onChange={(e) => setVName(e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     label="Patente"
                     fullWidth
@@ -252,7 +396,7 @@ export default function GestionPage() {
                     onChange={(e) => setVPatente(e.target.value)}
                   />
                 </Grid>
-                <Grid item xs={6}>
+                <Grid item xs={12} sm={6}>
                   <TextField
                     label="Precio compra"
                     fullWidth
@@ -271,57 +415,64 @@ export default function GestionPage() {
                   />
                 </Grid>
 
-                {/* Subir imagen */}
                 <Grid item xs={12}>
-                  <Button component="label" variant="outlined">
-                    {vImage ? "Cambiar imagen…" : "Subir imagen…"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        setVImage(file);
-                      }}
-                    />
-                  </Button>
-                  {vImage && (
-                    <>
-                      <Typography
-                        variant="caption"
-                        sx={{ ml: 1, display: "block" }}
-                      >
-                        {vImage.name}
-                      </Typography>
+                  <Stack spacing={1}>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={1.5}
+                      alignItems={{ xs: "stretch", sm: "center" }}
+                    >
+                      <Button component="label" variant="outlined">
+                        {vImage ? "Cambiar imagen" : "Subir imagen"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          hidden
+                          onChange={(e) => {
+                            const file = e.target.files?.[0] || null;
+                            setVImage(file);
+                          }}
+                        />
+                      </Button>
+                      {vImage ? (
+                        <Chip label={vImage.name} size="small" color="info" variant="outlined" />
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          Formato libre. Recomendado: imagen horizontal.
+                        </Typography>
+                      )}
+                    </Stack>
 
-                      {/* Vista previa de la imagen */}
-                      <div
-                        style={{
-                          marginTop: 8,
+                    {vImage ? (
+                      <Box
+                        sx={{
+                          mt: 0.5,
                           width: "100%",
-                          height: 160,
-                          borderRadius: 8,
+                          height: 190,
+                          borderRadius: 2,
                           overflow: "hidden",
-                          border: "1px solid rgba(0,0,0,0.12)",
+                          border: "1px solid",
+                          borderColor: "divider",
                         }}
                       >
-                        <img
+                        <Box
+                          component="img"
                           src={URL.createObjectURL(vImage)}
                           alt="Vista previa"
-                          style={{
+                          sx={{
                             width: "100%",
                             height: "100%",
                             objectFit: "cover",
                           }}
                         />
-                      </div>
-                    </>
-                  )}
+                      </Box>
+                    ) : null}
+                  </Stack>
                 </Grid>
 
                 <Grid item xs={12}>
                   <Button variant="contained" onClick={handleAddVehicle}>
-                    Agregar vehículo
+                    Agregar vehiculo
                   </Button>
                 </Grid>
               </Grid>
@@ -329,7 +480,6 @@ export default function GestionPage() {
           </Card>
         </Grid>
 
-        {/* Registrar gasto */}
         <Grid item xs={12} md={6}>
           <Card
             sx={{
@@ -339,36 +489,50 @@ export default function GestionPage() {
             }}
           >
             <CardContent>
-              <Typography variant="h6" mb={2}>
-                Registrar gasto
-              </Typography>
+              <SectionTitle
+                title="Registrar gasto"
+                subtitle="Carga egresos sobre un vehiculo activo."
+                chip={
+                  selectedVehicle ? (
+                    <Chip
+                      label={`${selectedVehicle.patente} - ${selectedVehicle.name}`}
+                      size="small"
+                      color="success"
+                      variant="outlined"
+                    />
+                  ) : null
+                }
+              />
+
+              {noActivos ? (
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  No hay vehiculos activos. Agrega uno nuevo o revisa tus ventas.
+                </Alert>
+              ) : null}
+
               <Grid container spacing={2}>
                 <Grid item xs={12}>
                   <TextField
                     select
-                    label={
-                      noActivos
-                        ? "No hay vehículos activos"
-                        : "Vehículo (solo activos)"
-                    }
+                    label={noActivos ? "No hay vehiculos activos" : "Vehiculo"}
                     fullWidth
                     value={vehicleId}
                     onChange={(e) => setVehicleId(e.target.value)}
                     disabled={noActivos}
                     helperText={
                       noActivos
-                        ? "Agrega un vehículo o desmarca una venta para registrar gastos."
-                        : ""
+                        ? "Agrega un vehiculo para registrar gastos."
+                        : "Solo se muestran vehiculos activos."
                     }
                   >
                     {activosSorted.map((v) => (
                       <MenuItem key={v._id} value={v._id}>
-                        {v.patente} — {v.name}
+                        {v.patente} - {v.name}
                       </MenuItem>
                     ))}
                   </TextField>
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     type="date"
                     label="Fecha"
@@ -379,7 +543,7 @@ export default function GestionPage() {
                     disabled={noActivos}
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     label="Concepto"
                     fullWidth
@@ -388,7 +552,7 @@ export default function GestionPage() {
                     disabled={noActivos}
                   />
                 </Grid>
-                <Grid item xs={12} md={4}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     label="Monto"
                     fullWidth
@@ -410,22 +574,53 @@ export default function GestionPage() {
               </Grid>
 
               <Divider sx={{ my: 2 }} />
-              <Typography variant="subtitle1" mb={1}>
-                Gastos del vehículo seleccionado
-              </Typography>
-              {expenses.map((g) => (
-                <Typography key={g._id} variant="body2">
-                  {formatAny_esCL(g.date)} — {g.name}: {currency(g.amount)}
-                </Typography>
-              ))}
+
+              <SectionTitle
+                title="Gastos del vehiculo seleccionado"
+                subtitle="Ultimos movimientos del activo actual."
+              />
+
+              <Stack spacing={1} sx={{ maxHeight: 200, overflowY: "auto", pr: 0.5 }}>
+                {expenses.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary">
+                    No hay gastos registrados para este vehiculo.
+                  </Typography>
+                ) : (
+                  expenses.map((g) => (
+                    <Paper
+                      key={g._id}
+                      variant="outlined"
+                      sx={{ p: 1.25, borderRadius: 2 }}
+                    >
+                      <Stack
+                        direction={{ xs: "column", sm: "row" }}
+                        spacing={0.75}
+                        justifyContent="space-between"
+                      >
+                        <Typography variant="body2">
+                          {formatAny_esCL(g.date)} - {g.name || "Sin concepto"}
+                        </Typography>
+                        <Typography variant="body2" fontWeight={700}>
+                          {currency(g.amount)}
+                        </Typography>
+                      </Stack>
+                    </Paper>
+                  ))
+                )}
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* ===== Activos ===== */}
         <Grid item xs={12}>
           <Card sx={{ borderTop: "4px solid #3B82F6", borderRadius: 2 }}>
             <CardContent>
+              <SectionTitle
+                title="Vehiculos activos"
+                subtitle="Controla inversion, gastos y marca ventas pendientes."
+                chip={<Chip label={`${integer(activosFiltrados.length)} visibles`} size="small" color="info" />}
+              />
+
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 alignItems={{ xs: "stretch", md: "center" }}
@@ -433,85 +628,63 @@ export default function GestionPage() {
                 sx={{ mb: 2 }}
                 spacing={2}
               >
-                <Typography variant="h6">Vehículos activos</Typography>
-                <TextField
+                <Alert severity="info" variant="outlined" sx={{ flex: 1 }}>
+                  Busca por patente o nombre para encontrar rapido un vehiculo.
+                </Alert>
+                <SearchField
                   placeholder="Buscar por patente o nombre"
                   value={qActivos}
                   onChange={(e) => setQActivos(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: qActivos ? (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={() => setQActivos("")}
-                        >
-                          <ClearIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ) : null,
-                  }}
-                  sx={{ width: { xs: "100%", md: 360 } }}
+                  onClear={() => setQActivos("")}
                 />
               </Stack>
 
-              <Grid container spacing={1} alignItems="stretch">
-                {activosFiltrados.length === 0 && (
+              <Grid container spacing={2} alignItems="stretch">
+                {activosFiltrados.length === 0 ? (
                   <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
-                      No hay vehículos activos que coincidan.
+                      No hay vehiculos activos que coincidan.
                     </Typography>
                   </Grid>
-                )}
+                ) : null}
 
                 {activosFiltrados.map((v) => {
                   const opTotal = expenseSumByVeh[v._id] || 0;
                   const totalInversion = Number(v.purchasePrice || 0) + opTotal;
 
                   return (
-                    <Grid key={v._id} item xs={12} md={6} lg={4}>
-                      <Card
-                        variant="outlined"
-                        sx={{ p: 2, borderRadius: 2, height: "100%" }}
-                      >
+                    <Grid key={v._id} item xs={12} md={6} xl={4}>
+                      <Card variant="outlined" sx={{ p: 2, borderRadius: 2, height: "100%" }}>
                         <Stack
                           direction="row"
                           alignItems="center"
                           justifyContent="space-between"
+                          spacing={1}
                         >
                           <Typography fontWeight={700}>
-                            {v.patente} — {v.name}
+                            {v.patente} - {v.name}
                           </Typography>
                           <Chip label="Activo" color="info" size="small" />
                         </Stack>
 
-                        {/* Thumbnail */}
-                        <Thumb
-                          src={v.imageUrl}
-                          alt={`${v.patente} ${v.name}`}
-                        />
+                        <Thumb src={v.imageUrl} alt={`${v.patente} ${v.name}`} />
 
-                        <Divider sx={{ my: 1.25 }} />
-                        <Stack spacing={0.5} sx={{ mb: 1.5 }}>
+                        <Stack spacing={0.75} sx={{ mb: 1.5 }}>
                           <Typography variant="body2" color="text.secondary">
-                            Compra: {formatAny_esCL(v.purchaseDate)} —{" "}
-                            {currency(v.purchasePrice)}
+                            Compra: {formatAny_esCL(v.purchaseDate)} - {currency(v.purchasePrice)}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            Gastos (operativos): {currency(opTotal)}
+                            Gastos operativos: {currency(opTotal)}
                           </Typography>
                           <Typography variant="body2" fontWeight={700}>
                             Total invertido: {currency(totalInversion)}
                           </Typography>
                         </Stack>
 
-                        <Divider sx={{ my: 1.25 }} />
-                        <Grid container spacing={1}>
-                          <Grid item xs={6}>
+                        <Divider sx={{ my: 1.5 }} />
+
+                        <Grid container spacing={1.25}>
+                          <Grid item xs={12} sm={6}>
                             <TextField
                               label="Fecha venta"
                               type="date"
@@ -527,7 +700,7 @@ export default function GestionPage() {
                               }
                             />
                           </Grid>
-                          <Grid item xs={6}>
+                          <Grid item xs={12} sm={6}>
                             <TextField
                               label="Precio venta"
                               size="small"
@@ -565,10 +738,21 @@ export default function GestionPage() {
           </Card>
         </Grid>
 
-        {/* ===== Vendidos ===== */}
         <Grid item xs={12}>
           <Card sx={{ borderTop: "4px solid #16a34a", borderRadius: 2 }}>
             <CardContent>
+              <SectionTitle
+                title="Vehiculos vendidos"
+                subtitle="Consulta resultado final y utilidad por unidad."
+                chip={
+                  <Chip
+                    label={`${integer(vendidosFiltrados.length)} visibles`}
+                    size="small"
+                    color="success"
+                  />
+                }
+              />
+
               <Stack
                 direction={{ xs: "column", md: "row" }}
                 alignItems={{ xs: "stretch", md: "center" }}
@@ -576,84 +760,68 @@ export default function GestionPage() {
                 sx={{ mb: 2 }}
                 spacing={2}
               >
-                <Typography variant="h6">Vehículos vendidos</Typography>
-                <TextField
+                <Alert severity="success" variant="outlined" sx={{ flex: 1 }}>
+                  Revisa utilidad final considerando compra y gastos operativos.
+                </Alert>
+                <SearchField
                   placeholder="Buscar por patente o nombre"
                   value={qVendidos}
                   onChange={(e) => setQVendidos(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: qVendidos ? (
-                      <InputAdornment position="end">
-                        <IconButton
-                          size="small"
-                          onClick={() => setQVendidos("")}
-                        >
-                          <ClearIcon fontSize="small" />
-                        </IconButton>
-                      </InputAdornment>
-                    ) : null,
-                  }}
-                  sx={{ width: { xs: "100%", md: 360 } }}
+                  onClear={() => setQVendidos("")}
                 />
               </Stack>
 
-              <Grid container spacing={1} alignItems="stretch">
-                {vendidosFiltrados.length === 0 && (
+              <Grid container spacing={2} alignItems="stretch">
+                {vendidosFiltrados.length === 0 ? (
                   <Grid item xs={12}>
                     <Typography variant="body2" color="text.secondary">
                       No hay vendidos que coincidan.
                     </Typography>
                   </Grid>
-                )}
+                ) : null}
 
                 {vendidosFiltrados.map((v) => {
                   const opTotal = expenseSumByVeh[v._id] || 0;
                   const totalCosto = Number(v.purchasePrice || 0) + opTotal;
                   const utilidad = Number(v.soldPrice || 0) - totalCosto;
+                  const utilidadColor = utilidad >= 0 ? "success.main" : "error.main";
 
                   return (
-                    <Grid key={v._id} item xs={12} md={6} lg={4}>
-                      <Card
-                        variant="outlined"
-                        sx={{ p: 2, borderRadius: 2, height: "100%" }}
-                      >
+                    <Grid key={v._id} item xs={12} md={6} xl={4}>
+                      <Card variant="outlined" sx={{ p: 2, borderRadius: 2, height: "100%" }}>
                         <Stack
                           direction="row"
                           alignItems="center"
                           justifyContent="space-between"
+                          spacing={1}
                         >
                           <Typography fontWeight={700}>
-                            {v.patente} — {v.name}
+                            {v.patente} - {v.name}
                           </Typography>
                           <Chip label="Vendido" color="success" size="small" />
                         </Stack>
 
-                        {/* Thumbnail */}
-                        <Thumb
-                          src={v.imageUrl}
-                          alt={`${v.patente} ${v.name}`}
-                        />
+                        <Thumb src={v.imageUrl} alt={`${v.patente} ${v.name}`} />
+
+                        <Stack spacing={0.75}>
+                          <Typography variant="body2" color="text.secondary">
+                            Compra: {formatAny_esCL(v.purchaseDate)} - {currency(v.purchasePrice)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Venta: {formatAny_esCL(v.soldDate)} - {currency(v.soldPrice)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Gasto operativo: {currency(opTotal)}
+                          </Typography>
+                        </Stack>
 
                         <Divider sx={{ my: 1.25 }} />
+
                         <Stack spacing={0.5}>
-                          <Typography variant="body2" color="text.secondary">
-                            Compra: {formatAny_esCL(v.purchaseDate)} —{" "}
-                            {currency(v.purchasePrice)}
+                          <Typography variant="body2">
+                            Costo total: {currency(totalCosto)}
                           </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Vendido: {formatAny_esCL(v.soldDate)} —{" "}
-                            {currency(v.soldPrice)}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Gasto total (operativo): {currency(opTotal)}
-                          </Typography>
-                          <Divider sx={{ my: 0.75 }} />
-                          <Typography variant="body2" fontWeight={700}>
+                          <Typography variant="body2" fontWeight={800} color={utilidadColor}>
                             Utilidad: {currency(utilidad)}
                           </Typography>
                         </Stack>
