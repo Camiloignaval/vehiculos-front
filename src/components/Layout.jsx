@@ -91,7 +91,10 @@ export default function Layout() {
         component="main"
         sx={{
           flexGrow: 1,
-          p: 3,
+          minWidth: 0,
+          width: "100%",
+          overflowX: "hidden",
+          p: { xs: 2, md: 3 },
           ml: { xs: 0, md: `${drawerWidth}px` },
           minHeight: "100vh",
         }}

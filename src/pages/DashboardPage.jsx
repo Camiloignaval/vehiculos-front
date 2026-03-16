@@ -322,12 +322,12 @@ export default function DashboardPage() {
   const COLORS = ["#22C55E", "#EF4444", "#3B82F6", "#F59E0B", "#8B5CF6", "#06B6D4"];
 
   return (
-    <>
+    <Box sx={{ width: "100%", maxWidth: "100%", overflowX: "hidden", minWidth: 0 }}>
       <Typography variant="h5" fontWeight={800} sx={{ mb: 2 }}>
         Dashboard
       </Typography>
 
-      <Paper sx={{ p: { xs: 2, md: 2.5 }, mb: 2 }}>
+      <Paper sx={{ p: { xs: 2, md: 2.5 }, mb: 2, width: "100%", maxWidth: "100%" }}>
         <Stack spacing={2}>
           <Stack
             direction={{ xs: "column", md: "row" }}
@@ -406,7 +406,11 @@ export default function DashboardPage() {
             </Button>
           </Stack>
 
-          <Alert severity="info" variant="outlined">
+          <Alert
+            severity="info"
+            variant="outlined"
+            sx={{ width: "100%", overflowWrap: "anywhere" }}
+          >
             {filterSummary}
           </Alert>
         </Stack>
@@ -419,7 +423,7 @@ export default function DashboardPage() {
         chipColor="primary"
       />
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid container spacing={2} sx={{ mb: 3, width: "100%", m: 0 }}>
         {loading
           ? Array.from({ length: 9 }).map((_, index) => (
               <Grid item xs={12} sm={6} md={4} lg={3} key={`range-skeleton-${index}`}>
@@ -440,7 +444,7 @@ export default function DashboardPage() {
         chipColor="secondary"
       />
 
-      <Grid container spacing={2} sx={{ mb: 3 }}>
+      <Grid container spacing={2} sx={{ mb: 3, width: "100%", m: 0 }}>
         {loading
           ? Array.from({ length: 3 }).map((_, index) => (
               <Grid
@@ -461,9 +465,9 @@ export default function DashboardPage() {
             ))}
       </Grid>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={2} sx={{ width: "100%", m: 0 }}>
         <Grid item xs={12} lg={8}>
-          <Paper sx={{ p: 2.5, height: "100%" }}>
+          <Paper sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: "100%", width: "100%", minWidth: 0 }}>
             <SectionHeader
               title="Comparativa por vehiculo"
               subtitle="Lectura rapida de inversion, gasto, ingreso y utilidad por unidad."
@@ -474,11 +478,12 @@ export default function DashboardPage() {
                 width: "100%",
                 overflowX: { xs: "auto", sm: "auto", md: "visible" },
                 overflowY: "hidden",
+                WebkitOverflowScrolling: "touch",
               }}
             >
               <Box
                 sx={{
-                  width: { xs: chartMinWidth, md: "100%" },
+                  width: { xs: Math.max(300, chartMinWidth), md: "100%" },
                   height: barHeight,
                 }}
               >
@@ -539,7 +544,7 @@ export default function DashboardPage() {
         </Grid>
 
         <Grid item xs={12} lg={4}>
-          <Paper sx={{ p: 2.5, height: "100%" }}>
+          <Paper sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, height: "100%", width: "100%", minWidth: 0 }}>
             <SectionHeader
               title="Ingresos vs gastos"
               subtitle="Peso relativo del resultado del periodo."
@@ -568,6 +573,6 @@ export default function DashboardPage() {
           </Paper>
         </Grid>
       </Grid>
-    </>
+    </Box>
   );
 }
